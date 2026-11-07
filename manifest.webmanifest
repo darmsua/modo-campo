@@ -1,0 +1,15 @@
+{
+  "name": "Modo Campo — Toolbox-OT",
+  "short_name": "Modo Campo",
+  "description": "Consulta cifrada de activos OT/ICS en campo",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f7fa",
+  "theme_color": "#0f2744",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

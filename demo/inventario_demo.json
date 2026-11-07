@@ -1,0 +1,1 @@
+{"proyecto":"ETAP El Lomo","activos":[{"ref":"A001","nombre":"PLC Bombeo y Filtracion","ip":"192.168.0.10","ubicacion":"Cuadro bombeo","clase":["HW","SW"],"purdue":1,"zona":"Operaciones"},{"ref":"A010","nombre":"Servidor SCADA","ip":"192.168.0.100","ubicacion":"Sala de control","clase":["HW","SW","S","D"],"purdue":2,"zona":"Operaciones"}]}

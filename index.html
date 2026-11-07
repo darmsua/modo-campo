@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f2744">
+<title>Modo Campo — Toolbox-OT</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#0f2744;--navy2:#17375e;--teal:#1f8a8a;--teal-d:#0e6b6b;--ink:#1a2535;--muted:#5a6b80;--line:#dfe6ee;--bg:#f4f7fa;--card:#fff;--accent:#e8743b;--soft:#eef4f8;--ok:#1f7a44;--bad:#c0392b;color-scheme:light}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;padding-bottom:30px}
+header{background:var(--navy);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px}
+header .logo{font-size:20px}
+header h1{font-size:16px;font-weight:700}
+header .sub{font-size:11px;opacity:.8;font-weight:400}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(15,39,68,.05)}
+.card h2{font-size:15px;color:var(--navy);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card .step{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--teal);color:#fff;font-size:12px;font-weight:800;flex-shrink:0}
+.card .step.done{background:var(--ok)}
+.card .step.pend{background:var(--muted)}
+.lead{font-size:12.5px;color:var(--muted);margin:2px 0 12px}
+label.f{display:block;font-size:12px;font-weight:700;color:var(--navy);margin:8px 0 4px}
+input[type=file],input[type=password],input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:15px;background:#fff;color:var(--ink)}
+input:focus{outline:none;border-color:var(--teal)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:active{transform:translateY(1px)}
+.btn.pri{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.big{width:100%;padding:14px;font-size:15px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:13px;padding:10px 12px;border-radius:9px;margin-top:10px;display:none}
+.status.show{display:block}
+.status.ok{background:#e9f7ec;color:#145a32;border:1px solid #b6e3c4}
+.status.err{background:#fdecea;color:#922b21;border:1px solid #f1c7c2}
+.status.info{background:var(--soft);color:#34506a;border:1px solid var(--line)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px}
+.badge.ok{background:#e9f7ec;color:#145a32}
+.badge.lock{background:#eef1f5;color:var(--muted)}
+.hide{display:none!important}
+#scanWrap{position:relative;border-radius:12px;overflow:hidden;background:#000;margin-top:10px}
+#video{width:100%;display:block;max-height:60vh;object-fit:cover}
+#scanFrame{position:absolute;inset:12%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.25)}
+.ficha{margin-top:4px}
+.ficha .code{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:.5px}
+.ficha .name{font-size:17px;font-weight:700;margin-bottom:10px}
+.ficha table{width:100%;border-collapse:collapse;font-size:14px}
+.ficha td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.ficha td.k{color:var(--muted);font-weight:700;width:38%;white-space:nowrap}
+.chip{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;margin:0 3px 3px 0}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700}
+.tag.it{background:#e7f1fb;color:#1a5a9e}.tag.ot{background:#fff3e0;color:#9a5a12}.tag.campo{background:#e9f7ec;color:#1f7a44}.tag.dmz{background:#efedff;color:#5b4bbf}
+.muted{color:var(--muted);font-size:12px}
+.foot{font-size:11px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.6}
+.locked{opacity:.5;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">🛡️</span>
+  <div><h1>Modo Campo</h1><div class="sub">Toolbox-OT · consulta de activos cifrada</div></div>
+</header>
+<div class="wrap">
+
+  <!-- Paso 1: identidad -->
+  <div class="card" id="cardId">
+    <h2><span class="step" id="s1">1</span> Tu identidad (certificado)</h2>
+    <p class="lead">Importa tu <b>.p12</b> (clave privada + certificado emitido por la CA de clase). No se guarda: se usa solo en esta sesión.</p>
+    <label class="f">Archivo .p12</label>
+    <input type="file" id="p12file" accept=".p12,.pfx">
+    <label class="f">Contraseña del .p12</label>
+    <input type="password" id="p12pass" placeholder="contraseña" autocomplete="off">
+    <div class="row" style="margin-top:12px"><button class="btn pri" id="btnId">🔓 Importar identidad</button><span class="badge lock" id="idBadge">🔒 sin identidad</span></div>
+    <div class="status" id="idStatus"></div>
+  </div>
+
+  <!-- Paso 2: paquete -->
+  <div class="card locked" id="cardPkg">
+    <h2><span class="step pend" id="s2">2</span> Base de datos cifrada</h2>
+    <p class="lead">Carga el paquete <b>.p7</b> (inventario cifrado y firmado por el profesor). Se descifra con tu clave y se verifica la firma de la CA.</p>
+    <label class="f">Archivo .p7 (paquete CMS)</label>
+    <input type="file" id="pkgfile" accept=".p7,.pem,.der,.cms">
+    <div class="row" style="margin-top:12px"><button class="btn pri" id="btnPkg">📦 Abrir base de datos</button></div>
+    <div class="status" id="pkgStatus"></div>
+  </div>
+
+  <!-- Paso 3: consulta -->
+  <div class="card locked" id="cardQuery">
+    <h2><span class="step pend" id="s3">3</span> Consultar activo</h2>
+    <p class="lead">Escanea el QR del equipo o escribe su código.</p>
+    <div class="row">
+      <button class="btn pri" id="btnScan">📷 Escanear QR</button>
+      <button class="btn hide" id="btnStop">✕ Detener</button>
+    </div>
+    <div id="scanWrap" class="hide"><video id="video" playsinline muted></video><div id="scanFrame"></div></div>
+    <canvas id="canvas" class="hide"></canvas>
+    <label class="f" style="margin-top:12px">…o código manual</label>
+    <div class="row"><input type="text" id="codeInput" placeholder="A001" style="flex:1;text-transform:uppercase"><button class="btn" id="btnFind">Buscar</button></div>
+    <div class="status" id="queryStatus"></div>
+  </div>
+
+  <!-- Ficha -->
+  <div class="card hide" id="cardFicha">
+    <div class="ficha" id="ficha"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="btnAgain">↻ Otra consulta</button></div>
+  </div>
+
+  <div class="foot">
+    Las etiquetas solo llevan el <b>código</b>. Los datos viven en la base cifrada, que se abre con tu certificado.<br>
+    Inspirada por David de Armas Suárez · Propulsada por Claude.ai · CC BY 4.0
+  </div>
+</div>
+
+<script src="fv_bundle.js"></script>
+<script>
+(function(){
+  var el=function(id){return document.getElementById(id);};
+  var state={identity:null, inventory:null, byCode:{}};
+
+  function status(node,kind,msg){node.className='status show '+kind;node.innerHTML=msg;}
+  function abFromFile(file){return file.arrayBuffer();}
+
+  function unlock(cardId,stepId){var c=el(cardId);c.classList.remove('locked');var s=el(stepId);if(s){s.classList.remove('pend');}}
+  function markDone(stepId){var s=el(stepId);if(s){s.classList.add('done');s.textContent='✓';}}
+
+  // ---- Paso 1: identidad ----
+  el('btnId').onclick=async function(){
+    var f=el('p12file').files[0], pass=el('p12pass').value;
+    if(!f){status(el('idStatus'),'err','Selecciona tu archivo .p12.');return;}
+    try{
+      var ab=await abFromFile(f);
+      var id=window.FV.parseP12(ab, pass||'');
+      if(!id.privateKey||!id.cert) throw new Error('El .p12 no contiene clave privada y certificado.');
+      state.identity=id;
+      el('idBadge').className='badge ok';el('idBadge').textContent='✓ identidad cargada';
+      markDone('s1');unlock('cardPkg','s2');
+      status(el('idStatus'),'ok','Identidad importada correctamente. Tu clave privada permanece solo en memoria.');
+      el('p12pass').value='';
+    }catch(e){
+      status(el('idStatus'),'err','No se pudo abrir el .p12: '+(/password|mac|invalid/i.test(e.message)?'contraseña incorrecta o archivo no válido.':e.message));
+    }
+  };
+
+  // ---- Paso 2: paquete ----
+  async function toArrayBuffer(file){
+    var ab=await file.arrayBuffer();
+    // admite PEM (-----BEGIN CMS-----) o DER binario
+    var head=new Uint8Array(ab.slice(0,30));
+    var txt=new TextDecoder().decode(head);
+    if(txt.indexOf('-----BEGIN')>=0){
+      var pem=new TextDecoder().decode(ab);
+      var b64=pem.replace(/-----[^-]+-----/g,'').replace(/\s+/g,'');
+      var bin=atob(b64);var u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+      return u.buffer;
+    }
+    return ab;
+  }
+  el('btnPkg').onclick=async function(){
+    var f=el('pkgfile').files[0];
+    if(!f){status(el('pkgStatus'),'err','Selecciona el paquete .p7.');return;}
+    if(!state.identity){status(el('pkgStatus'),'err','Importa primero tu identidad.');return;}
+    status(el('pkgStatus'),'info','Descifrando y verificando firma…');
+    try{
+      var pkg=await toArrayBuffer(f);
+      var caAb=state.identity.ca; // la CA suele venir en el .p12
+      if(!caAb) throw new Error('Tu .p12 no incluye el certificado de la CA; pídeselo al profesor.');
+      var res=await window.FV.openPackage(pkg, state.identity.privateKey, state.identity.cert, caAb);
+      if(!res.verified) throw new Error('FIRMA_INVALIDA');
+      var obj=JSON.parse(res.json);
+      var list=obj.activos||obj.devices||[];
+      state.inventory=obj; state.byCode={};
+      list.forEach(function(a){var code=(a.ref||a.codigo||a.props&&a.props.ref||'').toString().toUpperCase();if(code)state.byCode[code]=a;});
+      markDone('s2');unlock('cardQuery','s3');
+      status(el('pkgStatus'),'ok','<b>✓ Firma válida</b> (emitida por la CA de clase). Proyecto: <b>'+esc(obj.proyecto||obj.nombre||'—')+'</b> · '+list.length+' activos. Datos descifrados en este dispositivo.');
+    }catch(e){
+      if(e.message==='FIRMA_INVALIDA') status(el('pkgStatus'),'err','⚠️ La firma NO es válida: el paquete no procede de la CA de clase o ha sido manipulado. No se muestran datos.');
+      else status(el('pkgStatus'),'err','No se pudo abrir el paquete: '+(/decrypt|recipient|OAEP/i.test(e.message)?'este paquete no está cifrado para tu certificado.':e.message));
+    }
+  };
+
+  // ---- Paso 3: escaneo / búsqueda ----
+  var stream=null, scanning=false;
+  async function startScan(){
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      var v=el('video');v.srcObject=stream;await v.play();
+      el('scanWrap').classList.remove('hide');el('btnScan').classList.add('hide');el('btnStop').classList.remove('hide');
+      scanning=true;requestAnimationFrame(tick);
+    }catch(e){
+      status(el('queryStatus'),'err','No se pudo abrir la cámara ('+e.name+'). Usa el código manual. (La cámara requiere conexión segura https.)');
+    }
+  }
+  function stopScan(){scanning=false;if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}el('scanWrap').classList.add('hide');el('btnScan').classList.remove('hide');el('btnStop').classList.add('hide');}
+  function tick(){
+    if(!scanning)return;
+    var v=el('video'),c=el('canvas');
+    if(v.readyState===v.HAVE_ENOUGH_DATA){
+      c.width=v.videoWidth;c.height=v.videoHeight;
+      var ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(v,0,0,c.width,c.height);
+      var img=ctx.getImageData(0,0,c.width,c.height);
+      var qr=window.FV.jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+      if(qr&&qr.data){ stopScan(); lookup(qr.data.trim()); return; }
+    }
+    requestAnimationFrame(tick);
+  }
+  el('btnScan').onclick=startScan;
+  el('btnStop').onclick=stopScan;
+  el('btnFind').onclick=function(){var v=el('codeInput').value.trim();if(v)lookup(v);};
+  el('codeInput').addEventListener('keydown',function(e){if(e.key==='Enter'){var v=el('codeInput').value.trim();if(v)lookup(v);}});
+
+  function lookup(raw){
+    // el QR puede traer solo el código, o "A001 | ..." -> toma la primera palabra tipo código
+    var code=(raw.split(/[\s|;,]/)[0]||raw).toUpperCase();
+    var a=state.byCode[code]||state.byCode[raw.toUpperCase()];
+    if(!a){status(el('queryStatus'),'err','Código <b>'+esc(code)+'</b> no encontrado en la base.');el('cardFicha').classList.add('hide');return;}
+    status(el('queryStatus'),'ok','Activo <b>'+esc(code)+'</b> encontrado.');
+    renderFicha(a,code);
+  }
+
+  function esc(s){return (''+(s==null?'':s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function val(a,keys){for(var i=0;i<keys.length;i++){var p=keys[i].split('.');var v=a;for(var j=0;j<p.length&&v!=null;j++)v=v[p[j]];if(v!=null&&v!=='')return v;}return '';}
+  function zoneTag(z){var orig=z||'';var low=orig.toLowerCase();var cls=/it|enterprise/.test(low)?'it':/dmz/.test(low)?'dmz':/campo|field|nivel 0/.test(low)?'campo':'ot';return orig?'<span class="tag '+cls+'">'+esc(orig)+'</span>':'—';}
+  function renderFicha(a,code){
+    var name=val(a,['nombre','name','props.name']);
+    var ip=val(a,['ip','props.ip']);
+    var ubic=val(a,['ubicacion','props.ubicacion']);
+    var zona=val(a,['zona','props.zone']);
+    var purdue=val(a,['purdue','level','props.level']);
+    var clase=a.clase||a.props&&a.props.clase||[];
+    if(typeof clase==='string')clase=clase.split(/[^A-Za-z]+/).filter(Boolean);
+    var mfr=val(a,['fabricante','mfr','props.manufacturer']);
+    var modelo=val(a,['modelo','model','props.model']);
+    var proto=val(a,['protocolos','protocolo']);
+    var notas=val(a,['notas','notes','props.notes']);
+    var rows='';
+    function r(k,v){if(v==null||v==='')return;rows+='<tr><td class="k">'+k+'</td><td>'+v+'</td></tr>';}
+    r('Ubicación', esc(ubic));
+    r('Clase MAGERIT', (clase&&clase.length)?clase.map(function(c){return '<span class="chip">['+esc(c)+']</span>';}).join(''):'');
+    r('Nivel Purdue', purdue!==''?('N'+esc(purdue)):'');
+    r('Zona (IEC)', zona?zoneTag(zona):'');
+    r('IP', ip?('<b>'+esc(ip)+'</b>'):'');
+    r('Fabricante', esc(mfr));
+    r('Modelo', esc(modelo));
+    r('Protocolos', esc(proto));
+    r('Notas', esc(notas));
+    el('ficha').innerHTML='<div class="code">'+esc(code)+'</div><div class="name">'+esc(name||'(sin nombre)')+'</div><table>'+rows+'</table>';
+    el('cardFicha').classList.remove('hide');
+    el('cardFicha').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  el('btnAgain').onclick=function(){el('cardFicha').classList.add('hide');el('codeInput').value='';el('codeInput').focus();el('queryStatus').className='status';};
+
+  // Service worker (offline)
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+})();
+</script>
+</body>
+</html>

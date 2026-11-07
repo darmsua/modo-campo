@@ -1,0 +1,81 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>LEEME_ModoCampo</title>
+<style>
+@page{size:A4;margin:18mm 16mm}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1a2535;line-height:1.5;max-width:860px;margin:24px auto;padding:0 18px}
+h1{color:#0f2744;border-bottom:3px solid #1f8a8a;padding-bottom:6px;font-size:24px}
+h2{color:#17375e;margin-top:26px;border-bottom:1px solid #dfe6ee;padding-bottom:4px;font-size:19px}
+h3{color:#1f8a8a;font-size:15px}
+code{background:#eef4f8;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:.92em;color:#0e6b6b}
+pre{background:#0f2744;color:#e7eef6;padding:12px 14px;border-radius:8px;overflow:auto;font-size:12.5px;line-height:1.45}
+pre code{background:none;color:inherit;padding:0}
+blockquote{border-left:4px solid #1f8a8a;margin:12px 0;padding:6px 14px;background:#eef4f8;color:#34506a;border-radius:0 8px 8px 0}
+table{border-collapse:collapse;width:100%;margin:12px 0}
+th,td{border:1px solid #dfe6ee;padding:7px 10px;text-align:left;font-size:13.5px}
+th{background:#eef4f8;color:#0f2744}
+a{color:#0e6b6b}
+strong{color:#0f2744}
+hr{border:none;border-top:1px solid #dfe6ee;margin:22px 0}
+ul,ol{padding-left:22px}
+li{margin:3px 0}
+</style>
+</head><body><h1>Modo Campo — Toolbox-OT (visor de activos cifrado)</h1>
+<p>App web (PWA) para <strong>consultar en campo</strong> la ficha de un activo OT <strong>sin portátil</strong>: escaneas el
+<strong>QR</strong> del equipo (que solo lleva el <strong>código</strong>) y la app muestra sus datos, leídos de una base de
+datos <strong>cifrada y firmada</strong> que abres con <strong>tu certificado</strong> (<code>.p12</code>). Todo <strong>offline</strong>.</p>
+<h2>Qué incluye este paquete</h2>
+<pre><code>index.html            La app (visor Modo Campo)
+fv_bundle.js          Motor cripto+QR (PKI.js + forge + jsQR) — offline, sin CDN
+manifest.webmanifest  Metadatos PWA (instalable)
+sw.js                 Service worker (funciona sin conexión)
+icon-192.png/512.png  Iconos
+empaquetar.sh         Script del PROFESOR: firma + cifra el inventario -&gt; .p7
+GUIA_XCA_alumnos.md   Práctica de PKI con XCA (generar certificados)
+demo/                 Ejemplo listo para probar (ver abajo)
+</code></pre>
+<h2>Probar ya (carpeta <code>demo/</code>)</h2>
+<p>Necesitas servir la carpeta por <strong>HTTPS</strong> (la cámara y la instalación PWA lo exigen). Opciones:</p>
+<ul>
+<li><strong>GitHub Pages</strong> (recomendado): sube esta carpeta a un repo público → <em>Settings → Pages →
+  Deploy from a branch → main / root</em>. Abre la URL <code>https://TU_USUARIO.github.io/modo-campo/</code>.</li>
+<li><strong>Local (sin cámara):</strong> <code>python3 -m http.server</code> y abre <code>http://localhost:8000</code>. En <code>localhost</code>
+  el descifrado funciona; la <strong>cámara</strong> solo va por HTTPS, pero puedes usar el <strong>código manual</strong>.</li>
+</ul>
+<p>Con la app abierta:
+1. <strong>Identidad</strong> → <code>demo/alumno1.p12</code>, contraseña <strong><code>1234</code></strong>.
+2. <strong>Base de datos</strong> → <code>demo/inventario_demo.p7</code>.
+3. <strong>Consultar</strong> → teclea <code>A001</code> o <code>A010</code> (o escanea un QR con ese código).</p>
+<blockquote>
+<p>Los certificados de <code>demo/</code> son de <strong>prueba</strong> (CA de ejemplo). Para uso real, genera los tuyos
+con <strong>XCA</strong> siguiendo <code>GUIA_XCA_alumnos.md</code> y vuelve a empaquetar con <code>empaquetar.sh</code>.</p>
+</blockquote>
+<h2>Flujo real (resumen)</h2>
+<ol>
+<li><strong>Alumnos</strong>: generan clave + CSR en XCA → el <strong>profesor (CA)</strong> firma → obtienen su <code>.crt</code> y
+   exportan su <code>.p12</code> (clave + cert + CA).</li>
+<li><strong>Profesor</strong>: exporta el proyecto de Análisis de Riesgo a <code>inventario.json</code> y ejecuta:
+   <code>bash
+   ./empaquetar.sh inventario.json inventario.p7 profesor.crt profesor.key ca.crt alumno1.crt alumno2.crt …</code>
+   Reparte <code>inventario.p7</code> (va cifrado; no es secreto).</li>
+<li><strong>En campo</strong>: cada alumno abre Modo Campo, importa su <code>.p12</code>, carga <code>inventario.p7</code> y consulta.</li>
+</ol>
+<h2>Seguridad (y por qué está así)</h2>
+<ul>
+<li><strong>El QR solo lleva el código</strong> (p. ej. <code>A001</code>). Ningún dato sensible viaja en la pegatina: así no
+  se regala reconocimiento de la red a quien pase al lado. Los datos viven en la base cifrada.</li>
+<li><strong>Cifrado</strong> (confidencialidad): AES-256 + clave envuelta a cada alumno con <strong>RSA-OAEP</strong>. Solo
+  quien tenga la <strong>clave privada</strong> correspondiente abre la base.</li>
+<li><strong>Firma</strong> (autenticidad/integridad): el visor <strong>verifica</strong> que la base la firmó la <strong>CA de clase</strong>;
+  si no, muestra aviso y <strong>no enseña datos</strong>. Detecta manipulación y suplantación.</li>
+<li><strong>La clave privada no se guarda</strong>: el <code>.p12</code> se usa solo en memoria durante la sesión. Protégelo
+  con buena contraseña; si se filtra (con su contraseña), se pierde la confidencialidad.</li>
+<li>Es un sistema <strong>docente</strong>: usa primitivas reales (X.509, CMS/PKCS#7, AES-GCM/CBC, RSA-OAEP,
+  ECDSA/RSA), pero no está pensado como producto de producción.</li>
+</ul>
+<h2>Formato técnico</h2>
+<ul>
+<li>Paquete = <strong>CMS/PKCS#7</strong>: <code>EnvelopedData</code> (cifrado a varios destinatarios) que contiene un
+  <code>SignedData</code> (inventario firmado). Generado con <strong>OpenSSL</strong>; abierto en el navegador con <strong>PKI.js</strong>.</li>
+<li><code>.p12</code> = <strong>PKCS#12</strong> (lo exporta XCA): clave privada + certificado + CA. Se lee con <strong>forge</strong>.</li>
+</ul>
+<hr />
+<p>Inspirada por David de Armas Suárez (conecta3@hotmail.com) · Propulsada por Claude.ai · CC BY 4.0</p></body></html>

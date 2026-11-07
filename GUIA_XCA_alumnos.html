@@ -1,0 +1,113 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>GUIA_XCA_alumnos</title>
+<style>
+@page{size:A4;margin:18mm 16mm}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1a2535;line-height:1.5;max-width:860px;margin:24px auto;padding:0 18px}
+h1{color:#0f2744;border-bottom:3px solid #1f8a8a;padding-bottom:6px;font-size:24px}
+h2{color:#17375e;margin-top:26px;border-bottom:1px solid #dfe6ee;padding-bottom:4px;font-size:19px}
+h3{color:#1f8a8a;font-size:15px}
+code{background:#eef4f8;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:.92em;color:#0e6b6b}
+pre{background:#0f2744;color:#e7eef6;padding:12px 14px;border-radius:8px;overflow:auto;font-size:12.5px;line-height:1.45}
+pre code{background:none;color:inherit;padding:0}
+blockquote{border-left:4px solid #1f8a8a;margin:12px 0;padding:6px 14px;background:#eef4f8;color:#34506a;border-radius:0 8px 8px 0}
+table{border-collapse:collapse;width:100%;margin:12px 0}
+th,td{border:1px solid #dfe6ee;padding:7px 10px;text-align:left;font-size:13.5px}
+th{background:#eef4f8;color:#0f2744}
+a{color:#0e6b6b}
+strong{color:#0f2744}
+hr{border:none;border-top:1px solid #dfe6ee;margin:22px 0}
+ul,ol{padding-left:22px}
+li{margin:3px 0}
+</style>
+</head><body><h1>Práctica PKI con XCA — Modo Campo (Toolbox-OT)</h1>
+<p><strong>Objetivo:</strong> cada alumno genera su <strong>par de claves</strong> y obtiene un <strong>certificado</strong> firmado por la
+<strong>CA de clase</strong> (el profesor). Con ese certificado, el profesor <strong>cifra y firma</strong> la base de datos de
+activos, y el alumno la consulta en campo con la app <strong>Modo Campo</strong> (móvil, sin portátil).</p>
+<p>Herramienta: <strong>XCA</strong> (https://hohnstaedt.de/xca/) — gestor de PKI/certificados multiplataforma.</p>
+<p>Conceptos que practicas: clave pública/privada, <strong>CSR</strong> (petición de firma), <strong>CA</strong>, <strong>cadena de
+confianza</strong>, <strong>cifrado híbrido</strong> (AES + RSA-OAEP) y <strong>firma digital</strong>.</p>
+<hr />
+<h2>Parte 0 — (Profesor) Crear la CA de clase</h2>
+<ol>
+<li>Abre XCA → <strong>File → New Database</strong> (ponle contraseña; p. ej. <code>aula.xdb</code>).</li>
+<li>Pestaña <strong>Certificates → New Certificate</strong>.
+   - <em>Source</em>: <strong>Create a self signed certificate</strong>.
+   - <em>Subject</em>: rellena <code>commonName = CA Clase OT</code> (y organización, etc.).
+   - Pestaña <em>Extensions</em> → <em>Type</em> = <strong>Certification Authority</strong>.
+   - Genera también su clave (RSA 2048). <strong>Aceptar</strong>.</li>
+<li>Exporta el certificado de la CA: selecciónalo → <strong>Export → PEM (*.crt)</strong> → <code>ca.crt</code>.
+   (Este <code>ca.crt</code> lo necesitarán todos y el empaquetador.)</li>
+</ol>
+<hr />
+<h2>Parte 1 — (Alumno) Generar tu clave y tu petición (CSR)</h2>
+<p>Cada alumno trabaja en <strong>su propia</strong> base de datos XCA.</p>
+<ol>
+<li><strong>File → New Database</strong> (p. ej. <code>alumno.xdb</code>, con contraseña).</li>
+<li>Pestaña <strong>Private Keys → New Key</strong> → tipo <strong>RSA</strong>, tamaño <strong>2048</strong>. Nómbrala <code>Alumno-&lt;tu nombre&gt;</code>.</li>
+<li>Pestaña <strong>Certificate signing requests → New Request</strong>.
+   - <em>Source</em>: <strong>Create a certificate signing request</strong>.
+   - <em>Private key</em>: elige la clave que acabas de crear.
+   - <em>Subject</em>: <code>commonName = Alumno &lt;tu nombre&gt;</code> (y los campos que indique el profesor).
+   - <strong>Aceptar.</strong></li>
+<li>Exporta la petición: selecciona el CSR → <strong>Export → PEM (<em>.pem / </em>.csr)</strong> → <code>alumno.csr</code>.</li>
+<li><strong>Entrega <code>alumno.csr</code> al profesor</strong> (correo, carpeta compartida…). <strong>Tu clave privada NO se entrega nunca.</strong></li>
+</ol>
+<hr />
+<h2>Parte 2 — (Profesor) Firmar el CSR con la CA</h2>
+<p>En la base de datos de la CA:</p>
+<ol>
+<li><strong>Importa</strong> el CSR del alumno: pestaña <strong>Certificate signing requests → Import</strong> → <code>alumno.csr</code>.</li>
+<li>Pestaña <strong>Certificates → New Certificate</strong>.
+   - <em>Source</em>: <strong>Sign this Certificate signing request</strong> → selecciona el CSR del alumno.
+   - <em>Use this Certificate for signing</em>: selecciona la <strong>CA Clase OT</strong>.
+   - <em>Extensions</em> → <em>Type</em> = <strong>End Entity</strong>. Caducidad p. ej. 1–2 años.
+   - <strong>Aceptar.</strong></li>
+<li>Exporta el certificado firmado del alumno: selecciónalo → <strong>Export → PEM (*.crt)</strong> → <code>alumno-&lt;nombre&gt;.crt</code>.</li>
+<li><strong>Devuelve <code>alumno-&lt;nombre&gt;.crt</code> al alumno.</strong> Guarda una copia: el empaquetador la usará como destinatario.</li>
+</ol>
+<hr />
+<h2>Parte 3 — (Alumno) Montar tu identidad y exportar el <code>.p12</code></h2>
+<p>De vuelta en tu base de datos XCA:</p>
+<ol>
+<li><strong>Importa</strong> tu certificado firmado: <strong>Certificates → Import</strong> → <code>alumno-&lt;nombre&gt;.crt</code>.
+   (XCA lo enlaza automáticamente con tu clave privada.)</li>
+<li><strong>Importa</strong> también el <code>ca.crt</code> del profesor (<strong>Certificates → Import</strong>), para que la cadena quede completa.</li>
+<li>Selecciona <strong>tu</strong> certificado → <strong>Export → PKCS#12 (*.p12)</strong>.
+   - Marca <strong>"Export the Certificate chain"</strong> (así el <code>.p12</code> incluye también la CA).
+   - Pon una <strong>contraseña</strong> (la recordarás en la app). → <code>mi_identidad.p12</code>.</li>
+</ol>
+<p>Ese <code>.p12</code> contiene: <strong>tu clave privada + tu certificado + la CA</strong>. Es tu "identidad" para el Modo Campo.
+<strong>Protégelo</strong>: si alguien obtiene tu <code>.p12</code> y su contraseña, puede descifrar la base.</p>
+<hr />
+<h2>Parte 4 — (Profesor) Empaquetar la base de datos</h2>
+<p>Con los <code>.crt</code> de los alumnos autorizados, el <code>ca.crt</code>, y el certificado+clave del profesor
+(puedes usar la propia CA como firmante, o un certificado "Profesor" emitido por la CA):</p>
+<pre><code class="language-bash">./empaquetar.sh  inventario.json  inventario.p7  profesor.crt  profesor.key  ca.crt \
+                 alumno-ana.crt  alumno-luis.crt  alumno-eva.crt
+</code></pre>
+<ul>
+<li><strong>Firma</strong> el inventario con <code>profesor.crt/key</code> (la CA avala la firma).</li>
+<li><strong>Cifra</strong> una copia para <strong>cada</strong> alumno indicado (RSA-OAEP + AES-256).</li>
+<li>Resultado: <code>inventario.p7</code> → repártelo a los alumnos (no es secreto: va cifrado).</li>
+</ul>
+<blockquote>
+<p>El <code>inventario.json</code> es el proyecto exportado desde la app de Análisis de Riesgo.
+<strong>Autorización/revocación:</strong> quien no esté en la lista de <code>-recip</code> <strong>no podrá abrirlo</strong>.</p>
+</blockquote>
+<hr />
+<h2>Parte 5 — (Alumno) Consultar en campo</h2>
+<ol>
+<li>Abre <strong>Modo Campo</strong> en el móvil (la URL que te dé el profesor; o instálala como app).</li>
+<li><strong>Paso 1:</strong> importa tu <code>mi_identidad.p12</code> + contraseña.</li>
+<li><strong>Paso 2:</strong> carga <code>inventario.p7</code>. La app <strong>descifra</strong> con tu clave y <strong>verifica la firma</strong> de la CA.
+   - Si la firma no es de la CA de clase (o el archivo se manipuló) → <strong>aviso rojo y no muestra datos</strong>.</li>
+<li><strong>Paso 3:</strong> <strong>escanea el QR</strong> del equipo (o teclea el código <code>A001</code>) → ves la ficha del activo.</li>
+</ol>
+<hr />
+<h2>Preguntas para el aula</h2>
+<ul>
+<li>¿Por qué el QR del equipo lleva <strong>solo el código</strong> y no la IP? (pista: reconocimiento del atacante)</li>
+<li>¿Qué protege el <strong>cifrado</strong> y qué protege la <strong>firma</strong>? ¿Puede haber una sin la otra?</li>
+<li>¿Qué pasa si un alumno pierde su <code>.p12</code>? ¿Y si lo pierde <strong>con</strong> la contraseña apuntada al lado?</li>
+<li>¿Cómo revocarías el acceso de un alumno a futuras entregas?</li>
+<li>RSA-OAEP vs RSA PKCS#1 v1.5: ¿por qué el navegador exige OAEP?</li>
+</ul></body></html>
